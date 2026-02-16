@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC + Google Sheets Simple</title>
+    <title>NFC + Wallet QR</title>
     <style>
         * {
             margin: 0;
@@ -24,7 +24,7 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -40,6 +40,38 @@
             margin-bottom: 30px;
             font-size: 14px;
             text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .setup-box {
@@ -92,6 +124,14 @@
             background: linear-gradient(135deg, #28a745 0%, #20833a 100%);
         }
 
+        .btn-wallet {
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
         .btn-small {
             padding: 10px 25px;
             font-size: 14px;
@@ -122,20 +162,6 @@
         .status.error { background: #ff7675; color: #d63031; }
         .status.loading { background: #a29bfe; color: #6c5ce7; }
 
-        .card-info {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
-
-        .card-info h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-
         .user-card {
             background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
             border: 2px solid #667eea;
@@ -152,9 +178,36 @@
             margin-bottom: 15px;
         }
 
-        .user-card .welcome {
-            font-size: 18px;
-            color: #666;
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .qr-container canvas {
+            max-width: 100%;
+            height: auto;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .wallet-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .card-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
         }
 
         .data-row {
@@ -179,50 +232,30 @@
             word-break: break-all;
         }
 
-        .sheet-status {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin: 10px 0;
+        .scanner-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
         }
 
-        .sheet-connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .sheet-disconnected {
-            background: #f8d7da;
-            color: #721c24;
+        .scanner-container video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            margin: 15px auto;
+            display: block;
         }
 
         .instructions {
             background: #fff3cd;
             border: 2px solid #ffc107;
             border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .instructions h4 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .instructions ol {
-            margin-left: 20px;
-            color: #856404;
-            line-height: 1.8;
-            font-size: 14px;
-        }
-
-        .instructions code {
-            background: #fff;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         @keyframes pulse {
@@ -254,331 +287,278 @@
             color: #667eea;
         }
 
-        .badge {
+        .sheet-status {
             display: inline-block;
-            padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 11px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 600;
-            margin: 2px;
+            margin: 10px 0;
         }
 
-        .badge-new {
-            background: #28a745;
-            color: white;
-        }
-
-        .badge-registered {
-            background: #007bff;
-            color: white;
-        }
-
-        .token-box {
-            background: #e7f3ff;
-            border: 2px dashed #007bff;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .token-box h4 {
-            color: #004085;
-            font-size: 14px;
-            margin-bottom: 8px;
+        .sheet-connected {
+            background: #d4edda;
+            color: #155724;
         }
     </style>
+    
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>📱 NFC + Google Sheets</h1>
-        <p class="subtitle">Lee tarjetas NFC y guarda automáticamente en tu hoja de cálculo</p>
+        <h1>📱 Sistema NFC + Wallet QR</h1>
+        <p class="subtitle">Ficha con tarjeta física NFC o código QR desde tu móvil</p>
 
-        <!-- Configuración -->
+        <!-- Conexión Google Sheets -->
         <div class="setup-box">
-            <h3>🔗 Conectar Google Sheet</h3>
-            <p style="color: #004085; margin-bottom: 10px; font-size: 13px;">
-                Pega la URL de tu Google Apps Script aquí:
-            </p>
+            <h3>🔗 Google Sheet</h3>
             <input type="text" 
                    id="sheet-url" 
                    placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
-            <button class="btn-success" onclick="connectSheet()">
-                🔌 Conectar
-            </button>
-            <button class="btn-small" onclick="testConnection()">
-                🧪 Probar
-            </button>
+            <button class="btn-success" onclick="connectSheet()">🔌 Conectar</button>
+            <button class="btn-small" onclick="testConnection()">🧪 Probar</button>
             <div id="connection-status"></div>
         </div>
 
-        <!-- Instrucciones -->
-        <details style="margin: 20px 0;">
-            <summary style="cursor: pointer; padding: 15px; background: #f8f9fa; border-radius: 8px; font-weight: 600; color: #667eea;">
-                📋 ¿Cómo configurar? (Click aquí)
-            </summary>
-            <div class="instructions" style="margin-top: 10px;">
-                <h4>Pasos rápidos:</h4>
-                <ol>
-                    <li>Crea Google Sheet con 3 columnas: <code>card_id</code>, <code>name</code>, <code>token</code></li>
-                    <li>Extensiones → Apps Script</li>
-                    <li>Pega el código (botón abajo)</li>
-                    <li>Implementar → Aplicación web → Acceso: "Cualquier usuario"</li>
-                    <li>Copia la URL y pégala arriba</li>
-                </ol>
-                <button class="btn-small" onclick="showCode()">
-                    📝 Ver Código de Apps Script
-                </button>
-            </div>
-        </details>
-
-        <!-- Botones principales -->
-        <div style="text-align: center; margin: 30px 0;">
-            <button id="read-nfc">🔍 Leer Tarjeta NFC</button>
-            <button onclick="viewAllCards()">📊 Ver Todas</button>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('register')">
+                📝 Registrar NFC
+            </button>
+            <button class="tab" onclick="switchTab('scan')">
+                📷 Escanear QR
+            </button>
+            <button class="tab" onclick="switchTab('users')">
+                👥 Ver Usuarios
+            </button>
         </div>
 
-        <!-- Output -->
-        <div id="output">
-            <span class="status waiting">⏳ Esperando...</span>
-            <p>Conecta tu Google Sheet y presiona "Leer Tarjeta NFC"</p>
+        <!-- Tab 1: Registrar NFC -->
+        <div id="tab-register" class="tab-content active">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Registrar Tarjeta NFC</h2>
+            <button id="read-nfc" style="width: 100%; max-width: 400px; display: block; margin: 0 auto;">
+                🔍 Leer Tarjeta NFC
+            </button>
+            <div id="output-register">
+                <div style="padding: 20px; text-align: center; color: #666;">
+                    <p>👆 Presiona el botón y acerca tu tarjeta NFC</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Escanear QR -->
+        <div id="tab-scan" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Escanear QR para Fichar</h2>
+            
+            <div class="scanner-container">
+                <p style="margin-bottom: 15px; color: #666;">
+                    <strong>Instrucciones:</strong><br>
+                    1. Permitir acceso a la cámara<br>
+                    2. Apuntar al código QR del usuario<br>
+                    3. Se validará automáticamente
+                </p>
+                <button id="start-scan" onclick="startQRScanner()">
+                    📷 Iniciar Escáner
+                </button>
+                <video id="qr-video" style="display: none;"></video>
+                <div id="scan-result"></div>
+            </div>
+
+            <!-- Input manual alternativo -->
+            <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h4 style="color: #667eea; margin-bottom: 10px;">O ingresa el código manualmente:</h4>
+                <input type="text" 
+                       id="manual-token" 
+                       placeholder="Pega el token aquí"
+                       style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; margin: 10px 0;">
+                <button class="btn-success" onclick="validateManualToken()">
+                    ✓ Validar
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 3: Ver Usuarios -->
+        <div id="tab-users" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 20px;">Usuarios Registrados</h2>
+            <button onclick="loadAllUsers()">🔄 Actualizar Lista</button>
+            <div id="users-list"></div>
         </div>
     </div>
 
     <script>
-        const readButton = document.getElementById('read-nfc');
-        const output = document.getElementById('output');
-        const sheetUrlInput = document.getElementById('sheet-url');
-        const connectionStatus = document.getElementById('connection-status');
-
+        // Variables globales
         let sheetUrl = '';
         let isConnected = false;
-
+        let qrScanner = null;
         const hasNFC = 'NDEFReader' in window;
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Conectar Sheet
-        window.connectSheet = function() {
-            sheetUrl = sheetUrlInput.value.trim();
+        // Cargar URL guardada
+        const savedUrl = localStorage.getItem('nfc_sheet_url');
+        if (savedUrl) {
+            document.getElementById('sheet-url').value = savedUrl;
+            sheetUrl = savedUrl;
+        }
+
+        // ========== TABS ==========
+        function switchTab(tabName) {
+            // Ocultar todos
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             
+            // Mostrar seleccionado
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Detener escáner si cambia de tab
+            if (tabName !== 'scan' && qrScanner) {
+                stopQRScanner();
+            }
+        }
+
+        // ========== GOOGLE SHEETS ==========
+        window.connectSheet = function() {
+            sheetUrl = document.getElementById('sheet-url').value.trim();
             if (!sheetUrl) {
-                alert('❌ Por favor ingresa la URL del Google Sheet');
+                alert('❌ Ingresa la URL');
                 return;
             }
-
             localStorage.setItem('nfc_sheet_url', sheetUrl);
-            connectionStatus.innerHTML = `
-                <div class="sheet-status sheet-connected">
-                    ✅ Conectado
-                </div>
+            document.getElementById('connection-status').innerHTML = `
+                <div class="sheet-status sheet-connected">✅ Conectado</div>
             `;
             isConnected = true;
         };
 
-        // Probar conexión
         window.testConnection = async function() {
             if (!sheetUrl) {
-                sheetUrl = sheetUrlInput.value.trim();
+                sheetUrl = document.getElementById('sheet-url').value.trim();
                 if (!sheetUrl) {
-                    alert('❌ Ingresa la URL primero');
+                    alert('❌ Ingresa URL primero');
                     return;
                 }
             }
-
-            connectionStatus.innerHTML = `
-                <div class="sheet-status" style="background: #a29bfe; color: #6c5ce7;">
-                    🔄 Probando...
-                </div>
-            `;
 
             try {
                 const response = await fetch(sheetUrl + '?action=test');
                 const data = await response.json();
                 
                 if (data.status === 'ok') {
-                    connectionStatus.innerHTML = `
+                    document.getElementById('connection-status').innerHTML = `
                         <div class="sheet-status sheet-connected">
-                            ✅ Conexión OK - ${data.records || 0} tarjetas
+                            ✅ OK - ${data.records || 0} usuarios
                         </div>
                     `;
                     isConnected = true;
-                } else {
-                    throw new Error('Respuesta inválida');
                 }
             } catch (error) {
-                connectionStatus.innerHTML = `
-                    <div class="sheet-status sheet-disconnected">
+                document.getElementById('connection-status').innerHTML = `
+                    <div class="sheet-status" style="background: #f8d7da; color: #721c24;">
                         ❌ Error: ${error.message}
                     </div>
                 `;
-                isConnected = false;
             }
         };
 
-        // Leer NFC
-        readButton.addEventListener('click', async () => {
+        // ========== NFC REGISTRATION ==========
+        document.getElementById('read-nfc').addEventListener('click', async () => {
             if (!isConnected) {
-                alert('❌ Conecta tu Google Sheet primero');
+                alert('❌ Conecta Google Sheet primero');
                 return;
             }
 
             if (!hasNFC) {
-                if (isIOS) {
-                    showManualEntry();
-                } else {
-                    output.innerHTML = `
-                        <span class="status error">❌ Web NFC no soportado</span>
-                        <p>Usa Chrome en Android</p>
-                    `;
-                }
+                document.getElementById('output-register').innerHTML = `
+                    <div class="status error">❌ Web NFC no soportado</div>
+                    <p>Usa Chrome en Android</p>
+                `;
                 return;
             }
 
             try {
                 const ndef = new NDEFReader();
-                
-                output.innerHTML = `
-                    <span class="status reading scanning">🔍 Escaneando...</span>
-                    <p><strong>Acerca tu tarjeta NFC</strong></p>
+                document.getElementById('output-register').innerHTML = `
+                    <div class="status reading scanning">🔍 Escaneando...</div>
+                    <p>Acerca tu tarjeta NFC</p>
                 `;
                 
-                readButton.disabled = true;
                 await ndef.scan();
 
-                ndef.addEventListener("reading", async ({ message, serialNumber }) => {
-                    await processCard(serialNumber);
-                    readButton.disabled = false;
-                });
-
-                ndef.addEventListener("readingerror", () => {
-                    output.innerHTML = `
-                        <span class="status error">⚠️ Error de lectura</span>
-                        <p>Intenta de nuevo</p>
-                    `;
-                    readButton.disabled = false;
+                ndef.addEventListener("reading", async ({ serialNumber }) => {
+                    await processNFCCard(serialNumber);
                 });
 
             } catch (error) {
-                output.innerHTML = `
-                    <span class="status error">❌ Error</span>
-                    <p>${error.message}</p>
+                document.getElementById('output-register').innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
                 `;
-                readButton.disabled = false;
             }
         });
 
-        // Procesar tarjeta
-        async function processCard(cardId) {
-            output.innerHTML = `
-                <span class="status loading">🔄 Buscando en Google Sheet...</span>
+        async function processNFCCard(cardId) {
+            document.getElementById('output-register').innerHTML = `
+                <div class="status loading">🔄 Procesando...</div>
             `;
 
             try {
-                // Generar token automáticamente
                 const token = await generateToken(cardId);
-
-                // Buscar en Sheet
                 const response = await fetch(sheetUrl + '?action=find&card_id=' + encodeURIComponent(cardId));
                 const data = await response.json();
 
                 if (data.found) {
-                    // Ya existe
-                    displayRegisteredCard(cardId, token, data.record);
+                    // Ya registrado - mostrar QR
+                    displayUserQR(data.record);
                 } else {
-                    // Nueva - pedir nombre
-                    displayNewCard(cardId, token);
+                    // Nuevo - pedir nombre
+                    displayNewUserForm(cardId, token);
                 }
-
             } catch (error) {
-                output.innerHTML = `
-                    <span class="status error">❌ Error</span>
-                    <p>${error.message}</p>
+                document.getElementById('output-register').innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
                 `;
             }
         }
 
-        // Mostrar tarjeta registrada
-        function displayRegisteredCard(cardId, token, record) {
-            output.innerHTML = `
-                <span class="status success">✅ ¡Tarjeta Reconocida!</span>
-                <div class="user-card">
-                    <div class="name">👋 ¡Hola ${record.name}!</div>
-                    <div class="welcome">Bienvenido de vuelta</div>
-                    <span class="badge badge-registered">Registrado</span>
+        function displayNewUserForm(cardId, token) {
+            document.getElementById('output-register').innerHTML = `
+                <div class="status" style="background: #ffd93d; color: #856404;">
+                    ⚠️ Tarjeta Nueva
                 </div>
                 <div class="card-info">
-                    <h3>📇 Detalles</h3>
-                    <div class="data-row">
-                        <div class="data-label">Nombre</div>
-                        <div class="data-value">${record.name}</div>
-                    </div>
+                    <h3>Registrar Usuario</h3>
                     <div class="data-row">
                         <div class="data-label">ID de Tarjeta</div>
                         <div class="data-value">${cardId}</div>
                     </div>
-                    <div class="data-row">
-                        <div class="data-label">Token</div>
-                        <div class="data-value" style="font-size: 11px;">${token}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Mostrar nueva tarjeta
-        function displayNewCard(cardId, token) {
-            output.innerHTML = `
-                <span class="status" style="background: #ffd93d; color: #856404;">
-                    ⚠️ Tarjeta Nueva
-                </span>
-                <div class="card-info">
-                    <h3>📇 Registrar Nueva Tarjeta</h3>
-                    
-                    <div class="data-row">
-                        <div class="data-label">ID leído</div>
-                        <div class="data-value">${cardId}</div>
-                    </div>
-
-                    <div class="token-box">
-                        <h4>🔐 Token generado automáticamente:</h4>
-                        <div style="font-family: monospace; font-size: 11px; color: #004085; word-break: break-all; margin-top: 5px;">
-                            ${token}
-                        </div>
-                    </div>
-
                     <div style="margin-top: 20px;">
-                        <label style="display: block; color: #667eea; font-weight: 600; margin-bottom: 8px;">
-                            ¿Quién es el dueño de esta tarjeta?
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                            Nombre del usuario:
                         </label>
                         <input type="text" 
-                               id="new-user-name" 
+                               id="new-name" 
                                placeholder="Ej: Juan Pérez"
                                style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 16px;">
-                        <button class="btn-success" onclick="saveCard('${cardId}', '${token}')" style="margin-top: 15px; width: 100%;">
-                            💾 Guardar en Google Sheet
+                        <button class="btn-success" onclick="saveNewUser('${cardId}', '${token}')" 
+                                style="margin-top: 15px; width: 100%;">
+                            💾 Guardar y Generar QR
                         </button>
                     </div>
                 </div>
             `;
         }
 
-        // Guardar tarjeta
-        window.saveCard = async function(cardId, token) {
-            const name = document.getElementById('new-user-name').value.trim();
-            
+        window.saveNewUser = async function(cardId, token) {
+            const name = document.getElementById('new-name').value.trim();
             if (!name) {
-                alert('❌ Por favor ingresa un nombre');
+                alert('❌ Ingresa un nombre');
                 return;
             }
-
-            output.innerHTML = `
-                <span class="status loading">💾 Guardando...</span>
-            `;
 
             try {
                 const response = await fetch(sheetUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         action: 'add',
                         card_id: cardId,
@@ -588,55 +568,164 @@
                 });
 
                 const data = await response.json();
-
                 if (data.status === 'ok') {
-                    output.innerHTML = `
-                        <span class="status success">✅ ¡Guardado!</span>
-                        <div class="user-card">
-                            <div class="name">🎉 ${name}</div>
-                            <div class="welcome">Tarjeta registrada exitosamente</div>
-                            <span class="badge badge-new">Nuevo</span>
-                        </div>
-                        <div class="card-info">
-                            <h3>✅ Datos guardados en Google Sheet:</h3>
-                            <div class="data-row">
-                                <div class="data-label">Nombre</div>
-                                <div class="data-value">${name}</div>
-                            </div>
-                            <div class="data-row">
-                                <div class="data-label">ID de Tarjeta</div>
-                                <div class="data-value">${cardId}</div>
-                            </div>
-                            <div class="data-row">
-                                <div class="data-label">Token Generado</div>
-                                <div class="data-value" style="font-size: 11px;">${token}</div>
-                            </div>
-                        </div>
-                        <button class="btn-small" onclick="viewAllCards()" style="margin-top: 15px;">
-                            📊 Ver Todas las Tarjetas
-                        </button>
-                    `;
-                } else {
-                    throw new Error(data.message || 'Error desconocido');
+                    displayUserQR({ card_id: cardId, name: name, token: token });
                 }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        };
+
+        function displayUserQR(user) {
+            document.getElementById('output-register').innerHTML = `
+                <div class="status success">✅ ¡Usuario Registrado!</div>
+                <div class="user-card">
+                    <div class="name">👤 ${user.name}</div>
+                </div>
+                <div class="qr-container">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">
+                        Código QR Personal
+                    </h3>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        ${user.name} puede guardar este QR en su móvil para fichar sin tarjeta física
+                    </p>
+                    <div id="qrcode-display"></div>
+                    <div class="wallet-buttons">
+                        <button class="btn-wallet" onclick="addToAppleWallet('${user.token}', '${user.name}')">
+                            🍎 Añadir a Apple Wallet
+                        </button>
+                        <button class="btn-wallet" onclick="addToGoogleWallet('${user.token}', '${user.name}')">
+                            🤖 Añadir a Google Wallet
+                        </button>
+                    </div>
+                    <button class="btn-small" onclick="downloadQR('${user.name}')">
+                        📥 Descargar QR
+                    </button>
+                </div>
+                <div class="card-info">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">Token de acceso:</h4>
+                    <div class="data-row">
+                        <div class="data-value" style="font-size: 11px;">${user.token}</div>
+                    </div>
+                </div>
+            `;
+
+            // Generar QR
+            new QRCode(document.getElementById("qrcode-display"), {
+                text: user.token,
+                width: 300,
+                height: 300,
+                colorDark: "#667eea",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // ========== QR SCANNER ==========
+        async function startQRScanner() {
+            const video = document.getElementById('qr-video');
+            const resultDiv = document.getElementById('scan-result');
+            
+            video.style.display = 'block';
+            document.getElementById('start-scan').style.display = 'none';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                video.play();
+
+                resultDiv.innerHTML = `
+                    <div class="status reading">📷 Escaneando...</div>
+                    <p>Apunta al código QR</p>
+                    <button onclick="stopQRScanner()" class="btn-small">⏹️ Detener</button>
+                `;
+
+                // Escanear frames (implementación simple)
+                scanQRFromVideo(video, resultDiv);
 
             } catch (error) {
-                output.innerHTML = `
-                    <span class="status error">❌ Error</span>
-                    <p>${error.message}</p>
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                    <p>Asegúrate de dar permisos a la cámara</p>
+                `;
+            }
+        }
+
+        function scanQRFromVideo(video, resultDiv) {
+            // Nota: Para producción, usa una librería como jsQR
+            resultDiv.innerHTML += `
+                <div class="instructions">
+                    <strong>⚠️ Escáner de cámara básico</strong><br>
+                    Para mejor experiencia, usa una app de QR o pega el token manualmente abajo.
+                </div>
+            `;
+        }
+
+        function stopQRScanner() {
+            const video = document.getElementById('qr-video');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            document.getElementById('start-scan').style.display = 'inline-block';
+            document.getElementById('scan-result').innerHTML = '';
+        }
+
+        window.validateManualToken = async function() {
+            const token = document.getElementById('manual-token').value.trim();
+            if (!token) {
+                alert('❌ Ingresa un token');
+                return;
+            }
+
+            document.getElementById('scan-result').innerHTML = `
+                <div class="status loading">🔄 Validando...</div>
+            `;
+
+            try {
+                const response = await fetch(sheetUrl + '?action=findByToken&token=' + encodeURIComponent(token));
+                const data = await response.json();
+
+                if (data.found) {
+                    document.getElementById('scan-result').innerHTML = `
+                        <div class="status success">✅ Acceso Autorizado</div>
+                        <div class="user-card">
+                            <div class="name">👋 ¡Bienvenido ${data.record.name}!</div>
+                            <p style="margin-top: 10px; color: #666;">
+                                Fichaje registrado: ${new Date().toLocaleString('es-ES')}
+                            </p>
+                        </div>
+                    `;
+                    
+                    // Limpiar input
+                    document.getElementById('manual-token').value = '';
+                    
+                    // Log en consola
+                    console.log('✅ Fichaje:', data.record.name, new Date());
+                } else {
+                    document.getElementById('scan-result').innerHTML = `
+                        <div class="status error">❌ Token No Válido</div>
+                        <p>El código no está registrado en el sistema</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('scan-result').innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
                 `;
             }
         };
 
-        // Ver todas
-        window.viewAllCards = async function() {
+        // ========== USUARIOS ==========
+        window.loadAllUsers = async function() {
             if (!isConnected) {
-                alert('❌ Conecta tu Google Sheet primero');
+                alert('❌ Conecta Google Sheet primero');
                 return;
             }
 
-            output.innerHTML = `
-                <span class="status loading">📊 Cargando...</span>
+            document.getElementById('users-list').innerHTML = `
+                <div class="status loading">📊 Cargando...</div>
             `;
 
             try {
@@ -645,197 +734,100 @@
 
                 if (data.records && data.records.length > 0) {
                     let html = `
-                        <span class="status success">📊 ${data.records.length} Tarjetas Registradas</span>
-                        <div class="card-info">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th>ID Tarjeta</th>
-                                        <th>Token</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                        <div class="status success">
+                            👥 ${data.records.length} Usuarios Registrados
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>ID Tarjeta</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                     `;
 
-                    data.records.forEach(record => {
-                        const shortToken = record.token ? record.token.substring(0, 12) + '...' : 'N/A';
+                    data.records.forEach(user => {
                         html += `
                             <tr>
-                                <td><strong>${record.name}</strong></td>
-                                <td style="font-family: monospace; font-size: 11px;">${record.card_id}</td>
-                                <td style="font-family: monospace; font-size: 10px;">${shortToken}</td>
+                                <td><strong>${user.name}</strong></td>
+                                <td style="font-family: monospace; font-size: 11px;">${user.card_id}</td>
+                                <td>
+                                    <button class="btn-small" onclick='showUserQR(${JSON.stringify(user)})'>
+                                        📱 Ver QR
+                                    </button>
+                                </td>
                             </tr>
                         `;
                     });
 
-                    html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-
-                    output.innerHTML = html;
+                    html += `</tbody></table>`;
+                    document.getElementById('users-list').innerHTML = html;
                 } else {
-                    output.innerHTML = `
-                        <span class="status waiting">📋 Sin tarjetas</span>
-                        <p>No hay tarjetas registradas. Lee una tarjeta NFC para comenzar.</p>
+                    document.getElementById('users-list').innerHTML = `
+                        <div class="status waiting">📋 Sin usuarios</div>
                     `;
                 }
-
             } catch (error) {
-                output.innerHTML = `
-                    <span class="status error">❌ Error</span>
-                    <p>${error.message}</p>
+                document.getElementById('users-list').innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
                 `;
             }
         };
 
-        // Manual iOS
-        function showManualEntry() {
-            output.innerHTML = `
-                <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
-                    <h4 style="color: #856404;">🍎 iOS - Entrada Manual</h4>
-                    <p style="color: #856404; margin: 10px 0;">
-                        Lee el ID con Shortcuts/NFC Tools:
-                    </p>
-                    <input type="text" 
-                           id="manual-id" 
-                           placeholder="AA:BB:CC:DD:EE:FF"
-                           style="width: 100%; padding: 12px; border: 2px solid #ffc107; border-radius: 8px; margin: 10px 0;">
-                    <button class="btn-success" onclick="processManual()">
-                        🔍 Buscar
-                    </button>
-                </div>
-            `;
-        }
+        window.showUserQR = function(user) {
+            switchTab('register');
+            displayUserQR(user);
+        };
 
-        window.processManual = function() {
-            const cardId = document.getElementById('manual-id').value.trim();
-            if (cardId) {
-                processCard(cardId);
-            } else {
-                alert('❌ Ingresa un ID');
+        // ========== WALLET INTEGRATION ==========
+        window.addToAppleWallet = function(token, name) {
+            // Generar archivo .pkpass para Apple Wallet
+            alert('🍎 Generando pase para Apple Wallet...\n\nNota: Requiere servidor con certificados de Apple.\nAlternativa: Descarga el QR y añádelo a Notas/Fotos.');
+            // En producción, necesitarías un backend que genere .pkpass
+        };
+
+        window.addToGoogleWallet = function(token, name) {
+            // Google Wallet Web API
+            const passData = {
+                "iss": "tu-email@proyecto.iam.gserviceaccount.com",
+                "typ": "savetowallet",
+                "payload": {
+                    "genericObjects": [{
+                        "id": token,
+                        "classId": "tu-class-id",
+                        "cardTitle": { "defaultValue": { "language": "es", "value": "Tarjeta de Acceso" }},
+                        "header": { "defaultValue": { "language": "es", "value": name }},
+                        "barcode": {
+                            "type": "QR_CODE",
+                            "value": token
+                        }
+                    }]
+                }
+            };
+            
+            alert('🤖 Generando pase para Google Wallet...\n\nNota: Requiere configuración de Google Wallet API.\nAlternativa: Descarga el QR como imagen.');
+            // En producción, usarías Google Wallet API
+        };
+
+        window.downloadQR = function(name) {
+            const canvas = document.querySelector('#qrcode-display canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = `QR_${name}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
             }
         };
 
-        // Generar token SHA-256
+        // ========== UTILS ==========
         async function generateToken(data) {
             const encoder = new TextEncoder();
             const dataBuffer = encoder.encode(data);
             const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        // Mostrar código Apps Script
-        window.showCode = function() {
-            const code = `function doGet(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const action = e.parameter.action;
-  
-  if (action === 'test') {
-    const data = sheet.getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'ok',
-      records: data.length - 1
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  if (action === 'find') {
-    const cardId = e.parameter.card_id;
-    const data = sheet.getDataRange().getValues();
-    
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === cardId) {
-        return ContentService.createTextOutput(JSON.stringify({
-          found: true,
-          record: {
-            card_id: data[i][0],
-            name: data[i][1],
-            token: data[i][2]
-          }
-        })).setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      found: false
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  if (action === 'list') {
-    const data = sheet.getDataRange().getValues();
-    const records = [];
-    
-    for (let i = 1; i < data.length; i++) {
-      records.push({
-        card_id: data[i][0],
-        name: data[i][1],
-        token: data[i][2]
-      });
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      records: records
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    error: 'Invalid action'
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const action = e.parameter.action;
-  
-  if (action === 'add') {
-    sheet.appendRow([
-      e.parameter.card_id,
-      e.parameter.name,
-      e.parameter.token
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'ok'
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    error: 'Invalid action'
-  })).setMimeType(ContentService.MimeType.JSON);
-}`;
-
-            const win = window.open('', '_blank');
-            win.document.write(`
-                <html>
-                <head>
-                    <title>Código Apps Script</title>
-                    <style>
-                        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
-                        pre { background: white; padding: 20px; border-radius: 8px; overflow-x: auto; }
-                        button { background: #667eea; color: white; border: none; padding: 10px 20px; 
-                                border-radius: 5px; cursor: pointer; margin: 10px 0; }
-                    </style>
-                </head>
-                <body>
-                    <h2>📝 Código para Google Apps Script</h2>
-                    <p><strong>COLUMNAS EN SHEET:</strong> card_id | name | token</p>
-                    <button onclick="navigator.clipboard.writeText(document.querySelector('pre').textContent)">
-                        📋 Copiar Código
-                    </button>
-                    <pre>${code}</pre>
-                </body>
-                </html>
-            `);
-        };
-
-        // Cargar URL guardada
-        const savedUrl = localStorage.getItem('nfc_sheet_url');
-        if (savedUrl) {
-            sheetUrlInput.value = savedUrl;
-            sheetUrl = savedUrl;
         }
     </script>
 </body>
