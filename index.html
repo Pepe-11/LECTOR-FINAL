@@ -655,7 +655,7 @@
                     <button class="btn-wallet-apple" onclick="addToAppleWallet('${passDataEncoded}', '${name}')">
                         🍎 Añadir a Apple Wallet
                     </button>
-                    <button class="btn-wallet-google" onclick="addToGoogleWallet('${passDataEncoded}', '${name}')">
+                    <button class="btn-wallet-google" onclick="enviaraWallet('${passDataEncoded}', '${name}')">
                         🤖 Añadir a Google Wallet
                     </button>
                 </div>
@@ -754,56 +754,27 @@
             console.log('Apple Pass JSON:', passJson);
         };
 
-        window.addToGoogleWallet = function(passData, name) {
-            // URL para Google Wallet Web API
-            const decodedData = JSON.parse(atob(passData));
-            
-            // Crear objeto de pase para Google Wallet
-            const googlePassUrl = `https://pay.google.com/gp/v/save/${encodeURIComponent(passData)}`;
-            
-            // Por simplicidad, ofrecer descargar como GPay Link
-            const gpayLink = document.createElement('a');
-            gpayLink.href = '#';
-            gpayLink.onclick = function() {
-                alert(`🤖 Para integración completa de Google Wallet necesitas:\n\n1. Google Cloud Project\n2. Google Wallet API habilitada\n3. Class ID y Object ID\n\nAlternativa FÁCIL:\n• Descarga el QR\n• Usa app "Passes" o "Stocard"\n• Importa el QR como pase`);
-                
-                // Crear archivo temporal para GPay
-                const passContent = JSON.stringify({
-                    "iss": "your-service-account@project.iam.gserviceaccount.com",
-                    "aud": "google",
-                    "typ": "savetowallet",
-                    "iat": Math.floor(Date.now() / 1000),
-                    "payload": {
-                        "genericObjects": [{
-                            "id": decodedData.token,
-                            "classId": "your-class-id",
-                            "genericType": "GENERIC_TYPE_UNSPECIFIED",
-                            "hexBackgroundColor": "#667eea",
-                            "cardTitle": {
-                                "defaultValue": {
-                                    "language": "es",
-                                    "value": "Pase de Acceso"
-                                }
-                            },
-                            "header": {
-                                "defaultValue": {
-                                    "language": "es",
-                                    "value": name
-                                }
-                            },
-                            "barcode": {
-                                "type": "QR_CODE",
-                                "value": passData
-                            }
-                        }]
-                    }
-                }, null, 2);
-                
-                console.log('Google Wallet Pass:', passContent);
-                return false;
-            };
-            gpayLink.click();
-        };
+        async function enviarAWallet(cardId, userName) {
+            try {
+                // Llamada a tu servidor Node.js
+                const response = await fetch('http://localhost:3000/api/wallet/generate-pass', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cardId, userName })
+                });
+        
+                const data = await response.json();
+        
+                if (data.success) {
+                    // Opción A: Redirigir directamente a la página de Google para guardar
+                    window.open(data.saveUrl, '_blank');
+                } else {
+                    alert("Error al generar el pase: " + data.error);
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+            }
+        }
 
         window.downloadQR = function(name) {
             const canvas = document.querySelector('#qr-backup canvas');
