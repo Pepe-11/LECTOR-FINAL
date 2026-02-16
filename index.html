@@ -784,11 +784,10 @@
             alert('No se pudo generar el pase: ' + (data.error || 'Error desconocido'));
         }
 
-    } catch (error) {
-        // Manejo de errores de conexión (ej: el servidor Node.js está apagado)
-        console.error('Error de red:', error);
-        alert('Error de conexión con el servidor de Wallet. Asegúrate de que el backend esté corriendo.');
-    }
+       } catch (error) {
+        console.error('Error detallado:', error);
+        alert('Fallo de conexión: ' + error.message);
+        }
 };
 
         // ========== VALIDAR ==========
