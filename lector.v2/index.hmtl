@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; // <--- PEGA TU URL AQUÍ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI-Hd40ACG6oYIInX6xGmYufB5XuEO2SgbcPeSfiN7dYaqjrm6K-ssmF4TOfOmOQDiQQ/exec"; // <--- PEGA TU URL AQUÍ
         let currentUser = "";
         let timeLeft = 0;
         let countdown;
